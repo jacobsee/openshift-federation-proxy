@@ -21,7 +21,7 @@ var credentials map[string]Credential
 
 func main() {
 	credentials = make(map[string]Credential)
-	http.HandleFunc("/metrics", proxyRequest)
+	http.HandleFunc("/federate", proxyRequest)
 	log.Println("OpenShift Federation Proxy will now handle requests.")
 	http.ListenAndServe(":8080", nil)
 }
