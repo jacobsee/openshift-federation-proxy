@@ -41,6 +41,7 @@ Add an entry to `scrape_configs` in your `prometheus.yml` file:
 ```yaml
 scrape_configs:
   - job_name: 'openshift'
+    metrics_path: '/federate'
     scrape_interval: 30s
     params:
       'match[]':
