@@ -31,8 +31,9 @@ func proxyRequest(w http.ResponseWriter, r *http.Request) {
 	endpoint := query.Get("endpoint")
 	username := query.Get("username")
 	password := query.Get("password")
+	token := query.Get("token")
 
-	if len(endpoint) == 0 || len(username) == 0 || len(password) == 0 {
+	if len(endpoint) == 0 || ((len(username) == 0 || len(password) == 0) && len(token) == 0) {
 		log.Println("URL parameters are not set correctly.")
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -43,14 +44,23 @@ func proxyRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Authenticate (if needed)
 
-	credential, found := credentials[authEndpoint]
-	if !found || credential.expiry < time.Now().Unix() {
-		fmt.Printf("Fetching new token for %s\n", endpoint)
-		err := refreshToken(authEndpoint, username, password)
-		if err != nil {
-			log.Println(err)
-			w.WriteHeader(http.StatusUnauthorized)
-			return
+	if len(token) > 0 {
+		// Use provided token
+		credentials[authEndpoint] = Credential{
+			token: token,
+			expiry: 86400, // Assume token is good for one day (it's probably going to be refreshed before then anyway)
+		}
+	} else {
+		// Auth using username & password
+		credential, found := credentials[authEndpoint]
+		if !found || credential.expiry < time.Now().Unix() {
+			fmt.Printf("Fetching new token for %s\n", endpoint)
+			err := refreshToken(authEndpoint, username, password)
+			if err != nil {
+				log.Println(err)
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
 		}
 	}
 
